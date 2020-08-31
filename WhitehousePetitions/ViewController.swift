@@ -16,11 +16,34 @@ class ViewController: UITableViewController {
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		
+		performSelector(inBackground: #selector(fetchJSON), with: nil)
+				
 		navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Credits", style: .plain, target: self, action: #selector(creditsTapped))
 		let filter = UIBarButtonItem(title: "Filter", style: .plain, target: self, action: #selector(filterTapped))
 		let reload = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(reloadTapped))
 		navigationItem.leftBarButtonItems = [reload, filter]
 		
+//		let urlString: String
+//
+//		if navigationController?.tabBarItem.tag == 0 {
+//			urlString = "https://api.whitehouse.gov/v1/petitions.json?limit=100"
+//		} else {
+//			urlString = "https://api.whitehouse.gov/v1/petitions.json?signatureCountFloor=10000&limit=100"
+//		}
+//
+//		DispatchQueue.global(qos: .userInitiated).async {
+//			if let url = URL(string: urlString) {
+//				if let data = try? Data(contentsOf: url) {
+//					self.parse(json: data)
+//					return
+//				}
+//			}
+			//make showError() on the background, but...(look on this method below)
+//			self.showError()
+//		}
+	}
+	
+	@objc func fetchJSON() {
 		let urlString: String
 		
 		if navigationController?.tabBarItem.tag == 0 {
@@ -30,14 +53,12 @@ class ViewController: UITableViewController {
 		}
 		
 		if let url = URL(string: urlString) {
-			if let  data = try? Data(contentsOf: url) {
-				parse(json: data)
+			if let data = try? Data(contentsOf: url) {
+				self.parse(json: data)
 				return
 			}
 		}
-		showError()
 	}
-	
 	
 	func parse(json: Data) {
 		let decoder = JSONDecoder()
@@ -45,7 +66,10 @@ class ViewController: UITableViewController {
 		if let jsonPetitions = try? decoder.decode(Petitions.self, from: json) {
 			petitions = jsonPetitions.results
 			filteredPetitions = petitions
-			tableView.reloadData()
+			//we have to parse on the background, but reload data must be on the main thread as well as showing error alert
+			tableView.performSelector(onMainThread: #selector(UITableView.reloadData), with: nil, waitUntilDone: false)
+		} else {
+			performSelector(onMainThread: #selector(showError), with: nil, waitUntilDone: false)
 		}
 	}
 
@@ -80,7 +104,6 @@ class ViewController: UITableViewController {
 		let filterAction = UIAlertAction(title: "Filter", style: .default) { [weak self, weak ac] action in
 			guard let text = ac?.textFields?[0].text else { return }
 			self?.filter(text)
-//			self?.tableView.reloadData()
 		}
 		ac.addAction(filterAction)
 		present(ac, animated: true)
@@ -99,7 +122,7 @@ class ViewController: UITableViewController {
 	}
 	
 	
-	func showError() {
+	@objc func showError() {
 		let ac = UIAlertController(title: "Loading Error", message: "There was a problem loading the feed; please check your connection and try again", preferredStyle: .alert)
 		ac.addAction(UIAlertAction(title: "Ok", style: .default))
 		present(ac, animated: true)
