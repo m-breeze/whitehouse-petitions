@@ -22,25 +22,6 @@ class ViewController: UITableViewController {
 		let filter = UIBarButtonItem(title: "Filter", style: .plain, target: self, action: #selector(filterTapped))
 		let reload = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(reloadTapped))
 		navigationItem.leftBarButtonItems = [reload, filter]
-		
-//		let urlString: String
-//
-//		if navigationController?.tabBarItem.tag == 0 {
-//			urlString = "https://api.whitehouse.gov/v1/petitions.json?limit=100"
-//		} else {
-//			urlString = "https://api.whitehouse.gov/v1/petitions.json?signatureCountFloor=10000&limit=100"
-//		}
-//
-//		DispatchQueue.global(qos: .userInitiated).async {
-//			if let url = URL(string: urlString) {
-//				if let data = try? Data(contentsOf: url) {
-//					self.parse(json: data)
-//					return
-//				}
-//			}
-			//make showError() on the background, but...(look on this method below)
-//			self.showError()
-//		}
 	}
 	
 	@objc func fetchJSON() {
